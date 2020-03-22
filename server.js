@@ -130,36 +130,32 @@ app.get("/departments", function (req, res) {
 });
 
 app.get("/employee/:empNum", (req, res) => {
-    // initialize an empty object to store the values
     let viewData = {};
     dataService.getEmployeeByNum(req.params.empNum).then((data) => {
             if (data) {
-                viewData.employee = data; //store employee data in the "viewData" object as "employee"
+                viewData.employee = data; 
             } else {
-                viewData.employee = null; // set employee to null if none were returned
+                viewData.employee = null; 
             }
         }).catch(() => {
-            viewData.employee = null; // set employee to null if there was an error
+            viewData.employee = null; 
         }).then(dataService.getDepartments)
         .then((data) => {
-            viewData.departments = data; // store department data in the "viewData" object as "departments"
-            // loop through viewData.departments and once we have found the departmentId that matches
-            // the employee's "department" value, add a "selected" property to the matching
-            // viewData.departments object
+            viewData.departments = data; 
             for (let i = 0; i < viewData.departments.length; i++) {
                 if (viewData.departments[i].departmentId == viewData.employee.department) {
                     viewData.departments[i].selected = true;
                 }
             }
         }).catch(() => {
-            viewData.departments = []; // set departments to empty if there was an error
+            viewData.departments = []; 
         }).then(() => {
-            if (viewData.employee == null) { // if no employee - return an error
+            if (viewData.employee == null) { 
                 res.status(404).send("Employee Not Found");
             } else {
                 res.render("employee", {
                     viewData: viewData
-                }); // render the "employee" view
+                }); 
             }
         });
 });
