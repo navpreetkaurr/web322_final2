@@ -1,10 +1,10 @@
 /*********************************************************************************
-*  WEB322 –Assignment 04
+*  WEB322 –Assignment 05
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.
 *  No part of this assignment has been copied manually or electronically from any other source
 *  (including 3rd party web sites) or distributed to other students.
 *
-*  Name: Fahad Bin Mazhar Student ID: 152132189 Date: 22/03/2020
+*  Name: Muskan Student ID: 149410185 Date: 27/03/2020
 *
 *  Online (Heroku) URL: https://infinite-reef-97177.herokuapp.com/
 *
@@ -75,9 +75,6 @@ app.get("/", function (req, res) {
     res.render("home");
 });
 
-app.get("/home", function (req, res) {
-    res.render("home");
-});
 
 app.get("/about", function (req, res) {
     res.render("about");
