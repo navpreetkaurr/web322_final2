@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "Fahad Bin Mazhar",
+  "author": "Navpreet Kaur",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
