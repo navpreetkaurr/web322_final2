@@ -1,23 +1,25 @@
 /*********************************************************************************
-*  WEB322 –Assignment 05
+*  WEB322 –Assignment 06
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.
 *  No part of this assignment has been copied manually or electronically from any other source
 *  (including 3rd party web sites) or distributed to other students.
 *
-*  Name: Navpreet Kaur Student ID: 148332182 Date: 27/03/2020
+*  Name: Navpreet Kaur Student ID: 148332182 Date: 10/04/2020
 *
-*  Online (Heroku) URL: https://powerful-ocean-46263.herokuapp.com/
+*  Online (Heroku) URL: https://protected-cove-19026.herokuapp.com/
 *
 ********************************************************************************/
 
 const express = require("express");
 const app = express();
 const dataService = require("./data-service.js")
+const dataServiceAuth = require("./data-service-auth.js");
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
 const bodyParser = require("body-parser");
 const exphbs = require("express-handlebars");
+const clientSessions=require("client-sessions");
 const HTTP_PORT = process.env.PORT || 8080;
 
 function onHttpStart() {
@@ -29,6 +31,18 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+
+app.use(clientSessions({
+    cookieName: "session", 
+    secret: "web322_assignment6",
+    duration: 3 * 60 * 1000, // this is eual to three minutes
+    activeDuration: 1000 * 60 
+}));
+
+app.use(function(req, res, next) {
+    res.locals.session = req.session;
+    next();
+});  
 
 app.engine('.hbs', exphbs({
     extname: '.hbs',
@@ -59,10 +73,16 @@ app.use(function (req, res, next) {
     next();
 });
 
+let ensureLogin = (req, res, next) => {
+    if(!req.session.user){
+        res.redirect("/login");
+    } else {
+        next();
+    }
+};
 const storage = multer.diskStorage({
     destination: "./public/images/uploaded",
     filename: function (req, file, cb) {
-
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
@@ -71,6 +91,7 @@ const upload = multer({
     storage: storage
 });
 
+//-------------GET----------------//
 app.get("/", function (req, res) {
     res.render("home");
 });
@@ -78,6 +99,23 @@ app.get("/", function (req, res) {
 
 app.get("/about", function (req, res) {
     res.render("about");
+});
+
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+app.get('/logout', (req, res) => {
+    req.session.reset();
+    res.redirect('/');
+});
+
+app.get('/userHistory', ensureLogin, (req, res) => {
+    res.render('userHistory');
 });
 
 app.get("/employees/add", function (req, res) {
@@ -289,12 +327,42 @@ app.get("/images", (req, res) => {
     });
 });
 
+
+//--------POST--------//
+
+app.post('/register', (req, res) => {
+    dataServiceAuth.registerUser(req.body)
+    .then((value) => {
+        res.render('register', {successMessage: "User created"});
+    }).catch((err) => {
+        res.render('register', {errorMessage: err, userName: req.body.userName});
+    })
+});
+
+app.post('/login', (req, res) => {
+    req.body.userAgent = req.get('User-Agent');
+
+    dataServiceAuth.checkUser(req.body)
+    .then((user) => {
+        req.session.user = {
+            userName: user.userName,
+            email: user.email,
+            loginHistory: user.loginHistory
+        }
+        res.redirect('/employees');
+    }).catch((err) => {
+        res.render('login', {errorMessage: err, userName: req.body.userName});
+    });
+});
+
+
 app.post("/departments", (req, res) => {
     dataService.getDepartments().then((data) => {
         res.render("employees", {
             employees: data
         });
-    }).catch(() => {
+    })
+    .catch(() => {
         res.status(500).send("No Departments");
     })
 });
@@ -347,8 +415,12 @@ app.use((req, res) => {
     res.status(404).send("Page Not Found!");
 });
 
-dataService.initialize().then(() => {
-    app.listen(HTTP_PORT, onHttpStart);
-}).catch((err) => {
-    console.log("unable to start the server: " + err.message);
+dataService.initialize()
+.then(dataServiceAuth.initialize)
+.then(function(){
+ app.listen(HTTP_PORT, function(){
+ console.log("app listening on: " + HTTP_PORT)
+ });
+}).catch(function(err){
+ console.log("unable to start server: " + err);
 });
